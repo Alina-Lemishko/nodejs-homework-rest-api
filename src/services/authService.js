@@ -6,10 +6,11 @@ const {
   UnauthorizedError,
 } = require("../helpers/errors");
 
-const registration = async (email, password) => {
+const registration = async (email, password, avatarURL) => {
   const user = new User({
     email,
     password,
+    avatarURL,
   });
 
   const isNotNewUser = await User.findOne({ email });

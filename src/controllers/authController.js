@@ -1,16 +1,23 @@
 const jwt = require("jsonwebtoken");
+const gravatar = require("gravatar");
 const { User } = require("../db/userModel");
 const { registration, login } = require("../services/authService");
 
 const registrationController = async (req, res) => {
   try {
     const { email, password } = req.body;
+    const avatarURL = gravatar.url(
+      email,
+      { s: "250", r: "x", d: "retro" },
+      false
+    );
 
-    await registration(email, password);
+    await registration(email, password, avatarURL);
     return res.status(201).json({
       user: {
         email: email,
         subscription: "starter",
+        avatarURL: avatarURL,
       },
     });
   } catch (error) {
@@ -28,6 +35,7 @@ const loginController = async (req, res) => {
     user: {
       email: user.email,
       subscription: user.subscription,
+      avatarURL: user.avatarURL,
     },
   });
 };
@@ -48,14 +56,30 @@ const currentUserController = async (req, res) => {
   const token = await req.token;
   const user = jwt.decode(token, process.env.JWT_SECRET);
   const isUser = await User.find({ _id: user._id, token: token });
-
+  console.log("req.user", req.user);
   if (isUser.length > 0) {
     return res.status(200).json({
       email: req.user.email,
       subscription: req.user.subscription,
+      avatarURL: req.user.avatarURL,
     });
   } else {
     return res.status(401).json({ message: "Not authorized" });
+  }
+};
+
+const changeAvatarController = async (req, res) => {
+  const token = await req.token;
+  const user = jwt.decode(token, process.env.JWT_SECRET);
+  const { path } = req.file;
+  if (token) {
+    await User.findByIdAndUpdate(
+      { _id: user._id },
+      { avatarURL: path.replace(/\\/g, "/") }
+    );
+    res.status(200).json({ avatarURL: `${path}` });
+  } else {
+    res.status(401).json({ message: "Not authorized" });
   }
 };
 
@@ -64,4 +88,5 @@ module.exports = {
   loginController,
   logoutController,
   currentUserController,
+  changeAvatarController,
 };
