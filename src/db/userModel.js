@@ -18,6 +18,7 @@ const userSchema = new Schema({
     default: "starter",
   },
   token: String,
+  avatarURL: String,
 });
 
 userSchema.pre("save", async function () {
